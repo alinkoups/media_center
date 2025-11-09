@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Литература - School Media Center</title>
+    <title>Видеоуроки</title>
     <style>
         * {
             margin: 0;
@@ -226,7 +226,7 @@
     <header class="header">
         <div class="logo-container">
             <div class="logo"></div>
-            <a href="{% url 'media_center:index' %}" class="logo-text">School Media Center</a>
+            <a href="{% url 'media_center:index' %}" class="logo-text">School Storage</a>
         </div>
         <nav class="nav">
             <a href="{% url 'media_center:literature_levels' %}">Литература</a>
@@ -245,17 +245,14 @@
             <h1 class="levels-title">Выберите уровень школы</h1>
             <div class="levels-grid">
                 <a href="{% url 'media_center:video_list' 'elementary' %}" class="level-card">
-                    <div class="level-icon">📚</div>
                     <h2 class="level-name">Младшая школа</h2>
                     <p class="level-description">1-4 классы. Уроки для начальной школы</p>
                 </a>
                 <a href="{% url 'media_center:video_list' 'middle' %}" class="level-card">
-                    <div class="level-icon">📖</div>
                     <h2 class="level-name">Средняя школа</h2>
                     <p class="level-description">5-9 классы. Уроки для средней школы</p>
                 </a>
                 <a href="{% url 'media_center:video_list' 'high' %}" class="level-card">
-                    <div class="level-icon">🎓</div>
                     <h2 class="level-name">Старшая школа</h2>
                     <p class="level-description">10-11 классы. Уроки для старшей школы</p>
                 </a>

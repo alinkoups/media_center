@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ literature.title }} - School Media Center</title>
+    <title>{{ literature.title }}</title>
     <style>
         * {
             margin: 0;
@@ -213,7 +213,7 @@
     <header class="header">
         <div class="logo-container">
             <div class="logo"></div>
-            <a href="{% url 'media_center:index' %}" class="logo-text">School Media Center</a>
+            <a href="{% url 'media_center:index' %}" class="logo-text">School Storage</a>
         </div>
         <nav class="nav">
             <a href="{% url 'media_center:literature_levels' %}">Литература</a>

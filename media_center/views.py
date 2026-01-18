@@ -1,180 +1,133 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from .models import User, GalleryFolder, Gallery, SchoolClass, Literature, VideoLesson
+from django.contrib.auth.forms import AuthenticationForm
+from django.shortcuts import get_object_or_404, redirect, render
 
-def get_context(request):
-    return {
-        'school_name': 'Школа №1539',
-        'address': 'ул.Маломосковская д.7',
-        'phone': '+7 (499) 299-15-39',
-        'email': '1539@edu.mos.ru',
-        'is_authenticated': request.user.is_authenticated,
-        'user': request.user if request.user.is_authenticated else None
-    }
+from .forms import RegisterForm, GalleryFolderForm, PhotoForm, PostForm, VideoForm
+from .models import GalleryFolder, Post, Video
+
 
 def index(request):
-    context = get_context(request)
-    return render(request, 'index.html', context)
+    return render(request, 'media_center/index.html')
 
 
 def login_view(request):
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        user = authenticate(request, username=username, password=password)
+    form = AuthenticationForm(request, data=request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        login(request, form.get_user())
+        return redirect('media_center:index')
+    return render(request, 'media_center/login.html', {'form': form})
 
-        if user is not None:
-            login(request, user)
-            return redirect('media_center:index')
-        else:
-            messages.error(request, 'Неверный никнейм или пароль')
-
-    context = get_context(request)
-    return render(request, 'login.html', context)
 
 def register_view(request):
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        email = request.POST.get('email')
-        password = request.POST.get('password')
-        password2 = request.POST.get('password2')
+    form = RegisterForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        user = form.save()
+        # обычные пользователи по умолчанию
+        login(request, user)
+        return redirect("media_center:index")
+    return render(request, "media_center/register.html", {"form": form})
 
-        if password != password2:
-            messages.error(request, 'Пароли не совпадают')
-        elif User.objects.filter(username=username).exists():
-            messages.error(request, 'Пользователь с таким именем уже существует')
-        elif User.objects.filter(email=email).exists():
-            messages.error(request, 'Пользователь с такой почтой уже существует')
-        else:
-            user = User.objects.create_user(
-                username=username,
-                email=email,
-                password=password,
-                role='student'
-            )
-            login(request, user)
-            messages.success(request, 'Регистрация прошла успешно!')
-            return redirect('media_center:index')
 
-    context = get_context(request)
-    return render(request, 'register.html', context)
 
 def logout_view(request):
     logout(request)
     return redirect('media_center:index')
 
 
-@login_required(login_url='media_center:login')
+def post_list(request):
+    posts = Post.objects.select_related('author', 'photo').order_by('-updated_at')
+    return render(request, 'media_center/post_list.html', {'posts': posts})
+
+
+def post_detail(request, pk):
+    post = get_object_or_404(Post.objects.select_related('author', 'photo'), pk=pk)
+    return render(request, 'media_center/post_detail.html', {'post': post})
+
+
+@login_required
+def post_create(request):
+    form = PostForm(request.POST or None, request.FILES or None)
+    if request.method == 'POST' and form.is_valid():
+        post = form.save(commit=False)
+        post.author = request.user
+        post.save()
+        return redirect('media_center:post_list')
+    return render(request, 'media_center/post_form.html', {'form': form, 'mode': 'create'})
+
+
+@login_required
+def post_edit(request, pk):
+    post = get_object_or_404(Post, pk=pk)
+    if request.user != post.author and not request.user.is_staff:
+        return redirect('media_center:post_list')
+
+    form = PostForm(request.POST or None, request.FILES or None, instance=post)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        return redirect('media_center:post_list')
+    return render(request, 'media_center/post_form.html', {'form': form, 'mode': 'edit', 'post': post})
+
+
+@login_required
+def post_delete(request, pk):
+    post = get_object_or_404(Post, pk=pk)
+    if request.user.is_staff:
+        post.delete()
+    return redirect('media_center:post_list')
+
+
 def gallery_folders(request):
-    folders = GalleryFolder.objects.all().select_related('group')
-    context = get_context(request)
-    context['folders'] = folders
-    return render(request, 'gallery_folders.html', context)
+    folders = GalleryFolder.objects.all().order_by('folder_name')
+    return render(request, 'media_center/gallery_folders.html', {'folders': folders})
 
 
-@login_required(login_url='media_center:login')
+@login_required
+def folder_create(request):
+    form = GalleryFolderForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        return redirect('media_center:gallery_folders')
+    return render(request, 'media_center/folder_form.html', {'form': form})
+
+
+@login_required
+def photo_upload(request):
+    initial = {}
+    folder_id = request.GET.get('folder')
+    if folder_id:
+        initial['folder'] = folder_id
+
+    form = PhotoForm(request.POST or None, request.FILES or None, initial=initial)
+    if request.method == 'POST' and form.is_valid():
+        photo = form.save()
+        return redirect('media_center:gallery_photos', folder_id=photo.folder_id)
+    return render(request, 'media_center/photo_upload.html', {'form': form})
+
+
 def gallery_photos(request, folder_id):
     folder = get_object_or_404(GalleryFolder, id=folder_id)
-    photos = Gallery.objects.filter(folder=folder)
-    context = get_context(request)
-    context['photos'] = photos
-    context['folder'] = folder
-    return render(request, 'gallery_photos.html', context)
+    photos = folder.photos.all().order_by('-id')
+    return render(request, 'media_center/gallery_photos.html', {'folder': folder, 'photos': photos})
 
 
-@login_required(login_url='media_center:login')
-def literature_levels(request):
-    context = get_context(request)
-    return render(request, 'literature_levels.html', context)
+def video_list(request):
+    videos = Video.objects.all().order_by('-id')
+    return render(request, 'media_center/video_list.html', {'videos': videos})
 
 
-@login_required(login_url='media_center:login')
-def literature_list(request, level):
-    level_mapping = {
-        'elementary': 'Младшая школа',
-        'middle': 'Средняя школа',
-        'high': 'Старшая школа'
-    }
-
-    level_names = {
-        'elementary': 'младшей школы',
-        'middle': 'средней школы',
-        'high': 'старшей школы'
-    }
-
-    group_name = level_mapping.get(level)
-    school_class = SchoolClass.objects.filter(name=group_name).first()
-
-    if school_class:
-        literature = Literature.objects.filter(group=school_class)
-    else:
-        literature = []
-
-    context = get_context(request)
-    context.update({
-        'literature': literature,
-        'level_name': level_names.get(level, ''),
-        'level': level
-    })
-
-    return render(request, 'literature_list.html', context)
+@login_required
+def video_create(request):
+    form = VideoForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        return redirect('media_center:video_levels')
+    return render(request, 'media_center/video_form.html', {'form': form})
 
 
-@login_required(login_url='media_center:login')
-def literature_view(request, lit_id):
-    """Страница для просмотра/чтения литературы"""
-    literature = get_object_or_404(Literature, id=lit_id)
-    context = get_context(request)
-    context['literature'] = literature
-    return render(request, 'literature_view.html', context)
-
-
-@login_required(login_url='media_center:login')
-def video_levels(request):
-    context = get_context(request)
-    return render(request, 'video_levels.html', context)
-
-
-@login_required(login_url='media_center:login')
-def video_list(request, level):
-    level_mapping = {
-        'elementary': 'Младшая школа',
-        'middle': 'Средняя школа',
-        'high': 'Старшая школа'
-    }
-
-    level_names = {
-        'elementary': 'младшей школы',
-        'middle': 'средней школы',
-        'high': 'старшей школы'
-    }
-
-    group_name = level_mapping.get(level)
-    school_class = SchoolClass.objects.filter(name=group_name).first()
-
-    if school_class:
-        videos = VideoLesson.objects.filter(group=school_class)
-    else:
-        videos = []
-
-    print(videos)
-    context = get_context(request)
-    context.update({
-        'videos': videos,
-        'level_name': level_names.get(level, ''),
-        'level': level
-    })
-
-    return render(request, 'video_list.html', context)
-
-
-@login_required(login_url='media_center:login')
-def video_view(request, video_id):
-    """Страница для просмотра видео"""
-    video = get_object_or_404(VideoLesson, id=video_id)
-    context = get_context(request)
-    context['video'] = video
-    return render(request, 'video_view.html', context)
-
+@login_required
+def video_delete(request, pk):
+    if request.user.is_staff:
+        video = get_object_or_404(Video, pk=pk)
+        video.delete()
+    return redirect('media_center:video_levels')

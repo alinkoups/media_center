@@ -3,13 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Видеоуроки</title>
+    <title>School Media Center</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: Arial, sans-serif;
@@ -82,69 +78,36 @@
             transition: opacity 0.3s;
         }
 
-        .nav a:hover {
-            opacity: 0.7;
-        }
+        .nav a:hover { opacity: 0.7; }
 
         .main-content {
             flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
             padding: 40px 20px;
             background-color: #FFFFFF;
-        }
-
-        .levels-container {
-            max-width: 1200px;
-            margin: 0 auto;
             text-align: center;
         }
 
-        .levels-title {
-            font-size: 32px;
-            margin-bottom: 40px;
-            color: #333;
+        .main-title {
+            font-size: 38px;
+            font-weight: bold;
+            color: #a8a8d8;
+            margin-bottom: 10px;
+            text-transform: uppercase;
         }
 
-        .levels-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            margin-bottom: 50px;
-        }
-
-        .level-card {
-            background-color: #D8DCE8;
-            border-radius: 20px;
-            padding: 40px 30px;
-            text-decoration: none;
-            color: #000;
-            transition: transform 0.3s, background-color 0.3s;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .level-card:hover {
-            transform: translateY(-5px);
-            background-color: #C5CAD8;
-        }
-
-        .level-icon {
-            font-size: 48px;
+        .subtitle {
+            font-size: 36px;
+            font-weight: bold;
+            color: #9090c8;
             margin-bottom: 20px;
         }
 
-        .level-name {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 15px;
-        }
-
-        .level-description {
-            font-size: 16px;
-            color: #666;
-            line-height: 1.5;
-        }
-
         .footer {
-            background: linear-gradient(135deg, #c8d8f0 0%, #d0d0f0 100%);
+            background: #c8d8f0;
             padding: 30px 50px;
             display: flex;
             justify-content: space-between;
@@ -188,37 +151,56 @@
             font-size: 12px;
         }
 
-        .social-icon:hover {
-            transform: scale(1.1);
+        .social-icon:hover { transform: scale(1.1); }
+
+        /* Minimal extra UI helpers (keep design close) */
+        .page { width: min(980px, 100%); }
+        .stack { display: flex; flex-direction: column; gap: 16px; }
+        .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+        .card {
+            background: #fff;
+            border: 1px solid #e8e8f3;
+            border-radius: 18px;
+            padding: 18px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+            text-align: left;
         }
+        .center { text-align: center; }
+        .btn {
+            display: inline-block;
+            padding: 10px 14px;
+            background: #B4C0EF;
+            color: #000;
+            border-radius: 12px;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .btn.secondary { background: #e6e9fb; }
+        .input {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid #d8dcf0;
+            outline: none;
+            font-size: 16px;
+        }
+        .field { display: flex; flex-direction: column; gap: 6px; }
+        .muted { color: #666; font-size: 14px; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        .thumb { width: 100%; height: 160px; object-fit: cover; border-radius: 14px; border: 1px solid #eee; }
 
         @media (max-width: 768px) {
-            .header {
-                flex-direction: column;
-                gap: 20px;
-                padding: 20px;
-            }
-
-            .nav {
-                flex-direction: column;
-                gap: 15px;
-                text-align: center;
-            }
-
-            .levels-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .footer {
-                flex-direction: column;
-                gap: 30px;
-            }
-
-            .footer-info {
-                flex-direction: column;
-                gap: 20px;
-                text-align: center;
-            }
+            .header { flex-direction: column; gap: 20px; padding: 20px; }
+            .nav { flex-direction: column; gap: 15px; text-align: center; }
+            .main-title, .subtitle { font-size: 26px; }
+            .footer { flex-direction: column; gap: 30px; }
+            .footer-info { flex-direction: column; gap: 20px; text-align: center; }
         }
     </style>
 </head>
@@ -226,12 +208,12 @@
     <header class="header">
         <div class="logo-container">
             <div class="logo"></div>
-            <a href="{% url 'media_center:index' %}" class="logo-text">School Storage</a>
+            <a href="{% url 'media_center:index' %}" class="logo-text">School Media Center</a>
         </div>
         <nav class="nav">
-            <a href="{% url 'media_center:literature_levels' %}">Литература</a>
-            <a href="{% url 'media_center:video_levels' %}">Видеоуроки</a>
-            <a href="{% url 'media_center:gallery_folders' %}">Галерея</a>
+            <a href="{% url 'media_center:post_list' %}">Новостная лента</a>
+            <a href="{% url 'media_center:video_levels' %}">Видео</a>
+            <a href="{% url 'media_center:gallery_folders' %}">Фото</a>
             {% if user.is_authenticated %}
                 <a href="{% url 'media_center:logout' %}">Выход ({{ user.username }})</a>
             {% else %}
@@ -241,23 +223,7 @@
     </header>
 
     <main class="main-content">
-        <div class="levels-container">
-            <h1 class="levels-title">Выберите уровень школы</h1>
-            <div class="levels-grid">
-                <a href="{% url 'media_center:video_list' 'elementary' %}" class="level-card">
-                    <h2 class="level-name">Младшая школа</h2>
-                    <p class="level-description">1-4 классы. Уроки для начальной школы</p>
-                </a>
-                <a href="{% url 'media_center:video_list' 'middle' %}" class="level-card">
-                    <h2 class="level-name">Средняя школа</h2>
-                    <p class="level-description">5-9 классы. Уроки для средней школы</p>
-                </a>
-                <a href="{% url 'media_center:video_list' 'high' %}" class="level-card">
-                    <h2 class="level-name">Старшая школа</h2>
-                    <p class="level-description">10-11 классы. Уроки для старшей школы</p>
-                </a>
-            </div>
-        </div>
+        {% block content %}{% endblock %}
     </main>
 
     <footer class="footer">
